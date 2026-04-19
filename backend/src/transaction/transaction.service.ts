@@ -15,6 +15,7 @@ export class TransactionService {
         description: dto.description,
         amount: dto.amount,
         type: dto.type,
+        nature: dto.nature,
         date: new Date(dto.date),
         userId: dto.userId,
         categoryId: dto.categoryId,

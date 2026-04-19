@@ -31,7 +31,7 @@ export class UserService {
       },
     });
 
-    const { password: _, ...result } = user;
+    const { password: _, refreshToken: __, ...result } = user as { password: string; refreshToken?: string };
     return result;
   }
 
@@ -67,6 +67,45 @@ export class UserService {
     return user;
   }
 
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        refreshToken: true,
+      },
+    });
+  }
+
+  async findByIdWithRefreshToken(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        refreshToken: true,
+      },
+    });
+  }
+
+  async setCurrentRefreshToken(refreshToken: string, userId: string) {
+    const hashedToken = await bcrypt.hash(refreshToken, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: hashedToken },
+    });
+  }
+
+  async removeRefreshToken(userId: string) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: null },
+    });
+  }
+
   async update(id: string, dto: UpdateUserDto) {
     await this.findOne(id);
 
@@ -81,7 +120,11 @@ export class UserService {
       data,
     });
 
-    const { password: _, ...result } = updated;
+    const {
+      password: _,
+      refreshToken: __,
+      ...result
+    } = updated as { password: string; refreshToken?: string };
     return result;
   }
 
