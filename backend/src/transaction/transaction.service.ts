@@ -98,6 +98,64 @@ export class TransactionService {
     };
   }
 
+  async getCategorySummary(
+    userId: string,
+    categoryName: string,
+    year?: number,
+    month?: number,
+  ) {
+    const dateFilter = year && month
+      ? { gte: new Date(year, month - 1, 1), lte: new Date(year, month, 0, 23, 59, 59) }
+      : undefined;
+
+    const whereBase: any = {
+      userId,
+      category: {
+        name: categoryName,
+      },
+    };
+
+    const summaryWhere = dateFilter
+      ? { ...whereBase, date: dateFilter }
+      : whereBase;
+
+    const categoryTransactions = await this.prisma.transaction.findMany({
+      where: summaryWhere,
+      include: { category: true },
+      orderBy: { date: 'asc' },
+    });
+
+    const allTransactionsWhere = dateFilter
+      ? { userId, date: dateFilter }
+      : { userId };
+
+    const totalAmountResult = await this.prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: allTransactionsWhere,
+    });
+
+    const amount = categoryTransactions.reduce(
+      (sum, transaction) => sum + Math.abs(Number(transaction.amount)),
+      0,
+    );
+
+    const total = totalAmountResult._sum.amount
+      ? Math.abs(Number(totalAmountResult._sum.amount))
+      : 0;
+
+    const percentage = total > 0 ? Number(((amount / total) * 100).toFixed(2)) : 0;
+
+    return {
+      categoryName,
+      amount,
+      total,
+      percentage,
+      transactions: categoryTransactions,
+    };
+  }
+
   private async validateUserAndCategory(userId: string, categoryId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('Usuário não encontrado');

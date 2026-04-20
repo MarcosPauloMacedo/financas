@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -36,6 +37,25 @@ export class TransactionController {
       userId,
       Number(year),
       Number(month),
+    );
+  }
+
+  @Get('category-summary/:userId')
+  getCategorySummary(
+    @Param('userId') userId: string,
+    @Query('name') name: string,
+    @Query('year') year?: string,
+    @Query('month') month?: string,
+  ) {
+    if (!name) {
+      throw new BadRequestException('Category name query param is required');
+    }
+
+    return this.transactionService.getCategorySummary(
+      userId,
+      name,
+      year ? Number(year) : undefined,
+      month ? Number(month) : undefined,
     );
   }
 

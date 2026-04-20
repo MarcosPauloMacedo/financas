@@ -11,6 +11,8 @@ Definir a experiência do usuário e estrutura das telas.
 
 ## Sempre responder com:
 
+- Deve permitir copiar e colar a resposta como um arquivo JSON válido
+
 {
   "screen": "nome da tela",
   "goal": "objetivo da tela",
